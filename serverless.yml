@@ -1,0 +1,44 @@
+service: lamda-app
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  memorySize: 128
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: "arn:aws:dynamodb:us-east-1:*:table/items"
+functions:
+  getItem:
+    handler: get.run
+    events:
+      - http:
+          path: /items/{id}
+          method: get
+  createItem:
+    handler: create.run
+    events:
+      - http:
+          path: items
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    DataTable:
+      Type: "AWS::DynamoDB::Table"
+      Properties:
+        TableName: "items"
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
