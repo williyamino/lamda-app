@@ -1,0 +1,9 @@
+itemsIAM:
+  Effect: Allow
+  Action:
+    - dynamodb:Query
+    - dynamodb:Scan
+    - dynamodb:GetItem
+    - dynamodb:PutItem
+  Resource:
+    - ${self:custom.DataTable.arn}

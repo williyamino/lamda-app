@@ -1,44 +1,44 @@
 service: lamda-app
 
+plugins:
+  - serverless-bundle
+  - serverless-pseudo-parameters
+
 provider:
   name: aws
   runtime: nodejs12.x
   memorySize: 128
+  stage: ${opt:stage, 'dev'}
+  environment:
+    TABLE_NAME: ${self:custom.DataTable.name}
   iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-      Resource: "arn:aws:dynamodb:us-east-1:*:table/items"
+    - ${file(iam/itemsIAM.yml):itemsIAM}
 functions:
   getItem:
-    handler: get.run
+    handler: src/handlers/getItem.run
     events:
       - http:
-          path: /items/{id}
-          method: get
-  createItem:
-    handler: create.run
+          path: /item/{id}
+          method: GET
+  getItems:
+    handler: src/handlers/getItems.run
     events:
       - http:
           path: items
-          method: post
+          method: GET
+  createItem:
+    handler: src/handlers/createItem.run
+    events:
+      - http:
+          path: item
+          method: POST
           cors: true
 
 resources:
   Resources:
-    DataTable:
-      Type: "AWS::DynamoDB::Table"
-      Properties:
-        TableName: "items"
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+    DataTable: ${file(resources/items.yml):DataTable}
+
+custom:
+  DataTable:
+    name: !Ref DataTable
+    arn: !GetAtt DataTable.Arn
