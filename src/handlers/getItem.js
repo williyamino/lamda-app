@@ -4,9 +4,8 @@ import createError from "http-errors";
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
-async function getItem(event) {
+export async function getItemById(id) {
   let item;
-  const { id } = event.pathParameters;
 
   const params = {
     TableName: process.env.TABLE_NAME,
@@ -24,13 +23,20 @@ async function getItem(event) {
   }
 
   if (item) {
-    return {
-      statusCode: 200,
-      body: JSON.stringify(item),
-    };
+    return item;
   } else {
     throw new createError.NotFound(`Item with ID ${id} not found`);
   }
+}
+
+async function getItem(event) {
+  const { id } = event.pathParameters;
+  const item = await getItemById(id);
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify(item),
+  };
 }
 
 export const run = commonMiddleware(getItem);

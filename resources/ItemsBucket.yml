@@ -1,0 +1,22 @@
+ItemsBucket:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName: ${self:custom.ItemsBucket.name}
+    LifecycleConfiguration:
+      Rules:
+        - Id: ExpireFiles
+          Status: Enabled
+          ExpirationInDays: 1
+
+ItemsBucketPolicy:
+  Type: AWS::S3::BucketPolicy
+  Properties:
+    Bucket: !Ref ItemsBucket
+    PolicyDocument:
+      Statement:
+        - Sid: PublicRead
+          Effect: Allow
+          Principal: "*"
+          Action:
+            - s3:GetObject
+          Resource: arn:aws:s3:::${self:custom.ItemsBucket.name}/*

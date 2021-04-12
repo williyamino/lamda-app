@@ -5,5 +5,6 @@ itemsIAM:
     - dynamodb:Scan
     - dynamodb:GetItem
     - dynamodb:PutItem
+    - dynamodb:UpdateItem
   Resource:
     - ${self:custom.DataTable.arn}

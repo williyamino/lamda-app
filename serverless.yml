@@ -11,8 +11,13 @@ provider:
   stage: ${opt:stage, 'dev'}
   environment:
     TABLE_NAME: ${self:custom.DataTable.name}
+    MAIL_QUEUE_URL: ${self:custom.MailQueue.url}
+    ITEMS_BUCKET_NAME: ${self:custom.ItemsBucket.name}
+    MAIL_RECIPIENT: "yourMail@com"
   iamRoleStatements:
     - ${file(iam/itemsIAM.yml):itemsIAM}
+    - ${file(iam/MailQueueIAM.yml):MailQueueIAM}
+    - ${file(iam/ItemsBucketIAM.yml):ItemsBucketIAM}
 functions:
   getItem:
     handler: src/handlers/getItem.run
@@ -33,12 +38,25 @@ functions:
           path: item
           method: POST
           cors: true
+  uploadItemFile:
+    handler: src/handlers/uploadItemFile.run
+    events:
+      - http:
+          path: item/{id}/file
+          method: PATCH
 
 resources:
   Resources:
     DataTable: ${file(resources/items.yml):DataTable}
+    ItemsBucket: ${file(resources/ItemsBucket.yml):ItemsBucket}
+    ItemsBucketPolicy: ${file(resources/ItemsBucket.yml):ItemsBucketPolicy}
 
 custom:
   DataTable:
     name: !Ref DataTable
     arn: !GetAtt DataTable.Arn
+  MailQueue:
+    arn: ${cf:notification-lamda-service-${self:provider.stage}.MailQueueArn}
+    url: ${cf:notification-lamda-service-${self:provider.stage}.MailQueueUrl}
+  ItemsBucket:
+    name: item-bucket-qdfghjkl56789-${self:provider.stage}

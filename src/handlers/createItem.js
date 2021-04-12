@@ -4,6 +4,7 @@ import commonMiddleware from "../lib/commonMiddleware";
 import createError from "http-errors";
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const sqs = new AWS.SQS();
 
 async function createItem(event) {
   const data = event.body;
@@ -23,6 +24,16 @@ async function createItem(event) {
 
   try {
     await dynamoDB.put(params).promise();
+    await sqs
+      .sendMessage({
+        QueueUrl: process.env.MAIL_QUEUE_URL,
+        MessageBody: JSON.stringify({
+          subject: `Your item ${item.text} has been created`,
+          recipient: process.env.MAIL_RECIPIENT,
+          body: "You successfull created item",
+        }),
+      })
+      .promise();
   } catch (error) {
     console.error(error);
     throw new createError.InternalServerError(error);
